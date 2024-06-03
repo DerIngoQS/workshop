@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebSocket Chat Example</title>
+    <style>
+        #chat {
+            resize: none;
+            overflow: hidden;
+            min-width: 70%;
+            min-height: 300px;
+            max-height: 300px;
+            overflow-y: scroll;
+        }
+        #msg {
+            min-width: 40%;
+        }
+    </style>
+</head>
+<body>
+    <h1>WebSocket Chat Example</h1>
+    <p id="message">Connecting...</p>
+    <br/>
+    <div class="container">
+        <br/>
+        <div class="row">
+            <textarea id="chat"></textarea>
+        </div>
+        <div class="row">
+            <input id="msg" type="text" placeholder="enter your message">
+            <button id="send" type="button" disabled>send</button>
+        </div>
+    
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <script>
+        var connected = false;
+        var socket;
+
+        $( document ).ready(function() {
+            connect();
+            $("#send").click(sendMessage);
+
+            $("#name").keypress(function(event){
+                if(event.keyCode == 13 || event.which == 13) {
+                    connect();
+                }
+            });
+
+            $("#msg").keypress(function(event) {
+                if(event.keyCode == 13 || event.which == 13) {
+                    sendMessage();
+                }
+            });
+
+            $("#chat").change(function() {
+                scrollToBottom();
+            });
+
+            $("#name").focus();
+        });
+
+        var connect = function() {
+            if (! connected) {
+                socket = new WebSocket('wss://' + location.host + '/chatsocket');
+                socket.onopen = function(m) {
+                    connected = true;
+                    console.log("Connected to the web socket");
+                    $("#send").attr("disabled", false);
+                    $("#connect").attr("disabled", true);
+                    $("#name").attr("disabled", true);
+                    $("#chat").append("[Chatbot] Howdy, how may I help you? \n");
+                    $("#msg").focus();
+                    $("#message").text('Connected');
+                };
+                socket.onmessage = function(m) {
+                    console.log("Got message: " + m.data);
+                    $("#message").text('Received: ' + m.data);
+                    $("#chat").append("[Chatbot] " + m.data + "\n");
+                    scrollToBottom();
+                };
+                socket.onclose = function(event) {
+                    console.log("Disconnected");
+                    $("#message").text('Disconnected');
+                    $("#chat").append("[Chatbot] Disconnected" + "\n");
+                    scrollToBottom();
+                };
+                socket.onerror = function(error) {
+                    console.log("Error: " + error.message);
+                    $("#message").text('Error: ' + error.message);
+                    $("#chat").append("[Chatbot] Error: " + error.message + "\n");
+                    scrollToBottom();
+                };
+            }
+        };
+
+        var sendMessage = function() {
+            if (connected) {
+                var value = $("#msg").val();
+                console.log("Sending " + value);
+                $("#chat").append("[You] " + value + "\n")
+                socket.send(value);
+                $("#msg").val("");
+            }
+        };
+
+        var scrollToBottom = function () {
+            $('#chat').scrollTop($('#chat')[0].scrollHeight);
+        };
+
+    </script>
+</body>
+</html>
