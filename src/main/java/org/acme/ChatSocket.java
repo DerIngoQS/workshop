@@ -10,10 +10,10 @@ import jakarta.inject.Inject;
 @WebSocket(path = "/chatsocket")
 public class ChatSocket {
     @Inject
-    ChatService chatService;
+    Assistant assistant;
 
     @OnTextMessage
     public String onMessage(String userMessage){
-        return chatService.chat(userMessage);
+        return assistant.chat(userMessage);
     }
 }
